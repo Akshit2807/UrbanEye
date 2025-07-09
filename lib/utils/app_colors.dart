@@ -1,29 +1,30 @@
+// utils/app_colors.dart
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Primary Palette - Ethereal Purples & Blues
-  static const Color primary = Color(0xFF6366F1); // Indigo
+  // Dark Primary Palette
+  static const Color primary = Color(0xFF6366F1); // Bright indigo
   static const Color primaryLight = Color(0xFF818CF8);
   static const Color primaryDark = Color(0xFF4F46E5);
 
-  // Secondary Palette - Vibrant Greens
+  // Secondary Palette
   static const Color secondary = Color(0xFF10B981); // Emerald
   static const Color secondaryLight = Color(0xFF34D399);
   static const Color secondaryDark = Color(0xFF059669);
 
-  // Accent Colors - Sunset Gradients
+  // Accent Colors
   static const Color accent = Color(0xFFFF6B6B); // Coral
   static const Color accentOrange = Color(0xFFFF8E53);
   static const Color accentYellow = Color(0xFFFFD93D);
   static const Color accentPink = Color(0xFFEC4899);
 
-  // Neutral Palette
-  static const Color background = Color(0xFFFAFAFC);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceVariant = Color(0xFFF8FAFC);
-  static const Color textPrimary = Color(0xFF0F172A);
-  static const Color textSecondary = Color(0xFF475569);
-  static const Color textTertiary = Color(0xFF94A3B8);
+  // Dark Neutral Palette
+  static const Color background = Color(0xFF0F172A); // Dark slate
+  static const Color surface = Color(0xFF1E293B); // Slate 800
+  static const Color surfaceVariant = Color(0xFF334155); // Slate 700
+  static const Color textPrimary = Color(0xFFF8FAFC); // Almost white
+  static const Color textSecondary = Color(0xFFCBD5E1); // Slate 300
+  static const Color textTertiary = Color(0xFF94A3B8); // Slate 400
 
   // Status Colors
   static const Color success = Color(0xFF22C55E);
@@ -31,42 +32,42 @@ class AppColors {
   static const Color error = Color(0xFFEF4444);
   static const Color info = Color(0xFF3B82F6);
 
-  // Glassmorphism
-  static Color glassWhite = Colors.white.withOpacity(0.25);
-  static Color glassBlack = Colors.black.withOpacity(0.1);
+  // Glass effects
+  static Color glassWhite = Colors.white.withOpacity(0.1);
+  static Color glassBlack = Colors.black.withOpacity(0.3);
 
-  // Gradients
+  // Dark Gradients
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
   );
 
   static const LinearGradient secondaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
+    colors: [Color(0xFF10B981), Color(0xFF059669)],
   );
 
   static const LinearGradient accentGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFFF6B6B), Color(0xFFFFE66D)],
+    colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
   );
 
   static const LinearGradient backgroundGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFFFAFAFC), Color(0xFFF1F5F9)],
+    colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
   );
 
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFF667EEA),
-      Color(0xFF764BA2),
-      Color(0xFFFF6B6B),
+      Color(0xFF6366F1),
+      Color(0xFF8B5CF6),
+      Color(0xFFEC4899),
     ],
   );
 
@@ -74,9 +75,9 @@ class AppColors {
     begin: Alignment(-1.0, -0.3),
     end: Alignment(1.0, 0.3),
     colors: [
-      Color(0xFFE2E8F0),
-      Color(0xFFF1F5F9),
-      Color(0xFFE2E8F0),
+      Color(0xFF334155),
+      Color(0xFF475569),
+      Color(0xFF334155),
     ],
   );
 }

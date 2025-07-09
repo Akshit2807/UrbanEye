@@ -1,3 +1,4 @@
+// main.dart
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,7 +41,7 @@ class CivicReporterApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Civic Reporter',
+      title: 'UrbanEye',
       debugShowCheckedModeBanner: false,
 
       // Theme Configuration
@@ -360,7 +361,6 @@ class CivicReporterApp extends StatelessWidget {
         return MediaQuery(
           // Prevent text scaling beyond reasonable limits
           data: MediaQuery.of(context).copyWith(
-            textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.2),
           ),
           child: child!,
         );

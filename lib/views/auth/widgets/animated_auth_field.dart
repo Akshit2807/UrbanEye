@@ -1,3 +1,4 @@
+// views/auth/widgets/animated_auth_field.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../utils/app_colors.dart';
@@ -63,7 +64,7 @@ class _AnimatedAuthFieldState extends State<AnimatedAuthField> {
           widget.label,
           style: AppTextStyles.bodyMedium.copyWith(
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: AppColors.textSecondary,
           ),
         ),
         const SizedBox(height: 12),
@@ -74,7 +75,7 @@ class _AnimatedAuthFieldState extends State<AnimatedAuthField> {
               BoxShadow(
                 color: _isFocused
                     ? AppColors.primary.withOpacity(0.2)
-                    : Colors.black.withOpacity(0.05),
+                    : Colors.black.withOpacity(0.1),
                 blurRadius: _isFocused ? 20 : 10,
                 offset: Offset(0, _isFocused ? 8 : 4),
               ),
@@ -87,10 +88,14 @@ class _AnimatedAuthFieldState extends State<AnimatedAuthField> {
             validator: widget.validator,
             enabled: widget.enabled,
             focusNode: _focusNode,
-            style: AppTextStyles.bodyLarge,
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: AppColors.textPrimary,
+            ),
             decoration: InputDecoration(
               hintText: widget.hint,
-              hintStyle: AppTextStyles.bodyMedium,
+              hintStyle: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textTertiary,
+              ),
               prefixIcon: widget.prefixIcon != null
                   ? Container(
                 margin: const EdgeInsets.only(left: 16, right: 12),
@@ -119,7 +124,7 @@ class _AnimatedAuthFieldState extends State<AnimatedAuthField> {
               )
                   : null,
               filled: true,
-              fillColor: Colors.white,
+              fillColor: AppColors.surfaceVariant,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
@@ -127,7 +132,7 @@ class _AnimatedAuthFieldState extends State<AnimatedAuthField> {
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide(
-                  color: Colors.grey.shade200,
+                  color: AppColors.textTertiary.withOpacity(0.2),
                   width: 1,
                 ),
               ),
