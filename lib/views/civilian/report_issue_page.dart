@@ -81,7 +81,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
   }
 
   Future<void> _analyzeImage() async {
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 6));
 
     setState(() {
       _aiDescription = "I can see a damaged road surface with a significant pothole. The hole appears to be approximately 2 feet in diameter and could pose a safety risk to vehicles and pedestrians.";
