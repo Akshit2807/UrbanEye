@@ -389,6 +389,8 @@ flutter build web --release
 # Deploy to Firebase Hosting
 firebase deploy --only hosting
 ```
+web link - [![Live Demo](https://img.shields.io/badge/Live%20Demo-urbaneye.vercel.app-10B981?style=for-the-badge&logo=vercel&logoColor=white)](https://urban-eye-jfcf.vercel.app/)
+
 
 ---
 
