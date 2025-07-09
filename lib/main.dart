@@ -257,7 +257,7 @@ class CivicReporterApp extends StatelessWidget {
         ),
 
         // Card Theme
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 8,
           shadowColor: Colors.black.withOpacity(0.1),
           shape: RoundedRectangleBorder(
@@ -293,7 +293,7 @@ class CivicReporterApp extends StatelessWidget {
         ),
 
         // Dialog Theme
-        dialogTheme: DialogTheme(
+        dialogTheme: DialogThemeData(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
