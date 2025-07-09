@@ -1,8 +1,11 @@
-// views/social_worker/social_worker_dashboard.dart
+// views/social_worker/enhanced_social_worker_dashboard.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'dart:math' as math;
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
+import 'social_worker_community_page.dart';
+import 'social_worker_leaderboard_page.dart';
 
 class SocialWorkerDashboard extends StatefulWidget {
   final String category; // 'government', 'ngo', 'private'
@@ -19,6 +22,8 @@ class SocialWorkerDashboard extends StatefulWidget {
 class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _rotationController;
+  late AnimationController _floatingController;
+  int _selectedIndex = 0;
 
   final List<Map<String, dynamic>> _pendingRequests = [
     {
@@ -74,12 +79,18 @@ class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with Tick
       duration: const Duration(seconds: 10),
       vsync: this,
     )..repeat();
+
+    _floatingController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..repeat(reverse: true);
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
     _rotationController.dispose();
+    _floatingController.dispose();
     super.dispose();
   }
 
@@ -129,32 +140,191 @@ class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with Tick
         decoration: const BoxDecoration(
           gradient: AppColors.backgroundGradient,
         ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
+          children: [
+            _buildAnimatedBackground(),
+            SafeArea(
+              child: IndexedStack(
+                index: _selectedIndex,
                 children: [
-                  _buildHeader(),
-                  const SizedBox(height: 30),
-                  _buildStatsCards(),
-                  const SizedBox(height: 30),
-                  _buildPendingRequests(),
-                  const SizedBox(height: 30),
-                  _buildLeaderboard(),
-                  const SizedBox(height: 30),
-                  _buildQuickActions(),
-                  const SizedBox(height: 100),
+                  _buildDashboardHome(),
+                  // SocialWorkerCommunityPage(category: widget.category),
+                  // SocialWorkerLeaderboardPage(category: widget.category),
+                  _buildProfilePage(),
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
-      floatingActionButton: _buildFloatingActionButton(),
+      bottomNavigationBar: _buildEpicBottomNav(),
+      floatingActionButton: _selectedIndex == 0 ? _buildFloatingActionButton() : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  Widget _buildAnimatedBackground() {
+    return Stack(
+      children: [
+        AnimatedBuilder(
+          animation: _floatingController,
+          builder: (context, child) {
+            return Positioned(
+              top: 100 + _floatingController.value * 50,
+              right: 20,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.1),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+
+        AnimatedBuilder(
+          animation: _rotationController,
+          builder: (context, child) {
+            return Positioned(
+              bottom: 200,
+              left: 30,
+              child: Transform.rotate(
+                angle: _rotationController.value * 2 * math.pi,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: AppColors.secondary.withOpacity(0.2),
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEpicBottomNav() {
+    return Container(
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(
+          color: AppColors.primary.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildNavItem(0, Icons.dashboard_rounded, 'Dashboard'),
+          // _buildNavItem(1, Icons.groups_rounded, 'Community'),
+          // _buildNavItem(2, Icons.emoji_events_rounded, 'Leaderboard'),
+          _buildNavItem(1, Icons.person_rounded, 'Profile'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData icon, String label) {
+    final isSelected = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedIndex = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: isSelected ? _categoryGradient : null,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : AppColors.textTertiary,
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: AppTextStyles.caption.copyWith(
+                color: isSelected ? Colors.white : AppColors.textTertiary,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFloatingActionButton() {
+    return AnimatedBuilder(
+      animation: _pulseController,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: 1.0 + (_pulseController.value * 0.1),
+          child: FloatingActionButton.extended(
+            onPressed: () {
+              _showRequestSearch();
+            },
+            backgroundColor: AppColors.primary,
+            elevation: 15,
+            icon: const Icon(
+              Icons.search_rounded,
+              color: Colors.white,
+            ),
+            label: Text(
+              'Find Requests',
+              style: AppTextStyles.button.copyWith(fontSize: 14),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDashboardHome() {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 30),
+            _buildStatsCards(),
+            const SizedBox(height: 30),
+            _buildPendingRequests(),
+            const SizedBox(height: 30),
+            _buildQuickActions(),
+            const SizedBox(height: 100),
+          ],
+        ),
+      ),
     );
   }
 
@@ -615,127 +785,6 @@ class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with Tick
         .slideX(begin: 0.3, end: 0, delay: Duration(milliseconds: 2100 + (index * 200)), duration: 600.ms);
   }
 
-  Widget _buildLeaderboard() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Leaderboard - ${_categoryTitle}s',
-          style: AppTextStyles.heading3.copyWith(color: AppColors.textPrimary),
-        ).animate()
-            .fadeIn(delay: 2700.ms, duration: 600.ms),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              _buildLeaderboardItem(
-                rank: 1,
-                name: 'Sarah Wilson',
-                score: '98 points',
-                isCurrentUser: false,
-              ),
-              const SizedBox(height: 12),
-              _buildLeaderboardItem(
-                rank: 2,
-                name: 'Mike Johnson',
-                score: '87 points',
-                isCurrentUser: false,
-              ),
-              const SizedBox(height: 12),
-              _buildLeaderboardItem(
-                rank: 3,
-                name: 'You',
-                score: '76 points',
-                isCurrentUser: true,
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () => _showFullLeaderboard(),
-                child: Text(
-                  'View Full Leaderboard',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ).animate()
-            .fadeIn(delay: 2900.ms, duration: 600.ms)
-            .slideY(begin: 0.3, end: 0, delay: 2900.ms, duration: 600.ms),
-      ],
-    );
-  }
-
-  Widget _buildLeaderboardItem({
-    required int rank,
-    required String name,
-    required String score,
-    required bool isCurrentUser,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isCurrentUser ? AppColors.primary.withOpacity(0.1) : AppColors.surfaceVariant,
-        borderRadius: BorderRadius.circular(12),
-        border: isCurrentUser
-            ? Border.all(color: AppColors.primary.withOpacity(0.3))
-            : null,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: _getRankColor(rank),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                '$rank',
-                style: AppTextStyles.subtitle2.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              name,
-              style: AppTextStyles.subtitle2.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: isCurrentUser ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
-          ),
-          Text(
-            score,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildQuickActions() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -750,12 +799,38 @@ class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with Tick
           children: [
             Expanded(
               child: _buildActionCard(
+                title: 'Community',
+                subtitle: 'Connect & Share',
+                icon: Icons.groups_rounded,
+                color: AppColors.secondary,
+                onTap: () => setState(() => _selectedIndex = 1),
+                delay: 3300,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildActionCard(
+                title: 'Leaderboard',
+                subtitle: 'View Rankings',
+                icon: Icons.emoji_events_rounded,
+                color: AppColors.warning,
+                onTap: () => setState(() => _selectedIndex = 2),
+                delay: 3500,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildActionCard(
                 title: 'Analytics',
                 subtitle: 'View reports',
                 icon: Icons.analytics_rounded,
                 color: AppColors.info,
                 onTap: _showAnalytics,
-                delay: 3300,
+                delay: 3700,
               ),
             ),
             const SizedBox(width: 16),
@@ -764,9 +839,9 @@ class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with Tick
                 title: 'Profile',
                 subtitle: 'Manage account',
                 icon: Icons.person_rounded,
-                color: AppColors.secondary,
-                onTap: _showProfile,
-                delay: 3500,
+                color: AppColors.primary,
+                onTap: () => setState(() => _selectedIndex = 3),
+                delay: 3900,
               ),
             ),
           ],
@@ -835,17 +910,157 @@ class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with Tick
         .slideY(begin: 0.3, end: 0, delay: Duration(milliseconds: delay), duration: 600.ms);
   }
 
-  Color _getRankColor(int rank) {
-    switch (rank) {
-      case 1:
-        return AppColors.warning; // Gold
-      case 2:
-        return AppColors.textTertiary; // Silver
-      case 3:
-        return AppColors.accent; // Bronze
-      default:
-        return AppColors.primary;
-    }
+  Widget _buildProfilePage() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: _categoryGradient,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _categoryIcon,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'John Doe',
+                  style: AppTextStyles.heading2.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  _categoryTitle,
+                  style: AppTextStyles.subtitle1.copyWith(
+                    color: Colors.white.withOpacity(0.9),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildProfileStat('Rating', '4.8⭐'),
+                    _buildProfileStat('Tasks', '156'),
+                    _buildProfileStat('Rank', '#3'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildProfileOption(Icons.edit_rounded, 'Edit Profile'),
+          _buildProfileOption(Icons.settings_rounded, 'Settings'),
+          _buildProfileOption(Icons.help_rounded, 'Help & Support'),
+          _buildProfileOption(Icons.logout_rounded, 'Sign Out', isLogout: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileStat(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: AppTextStyles.heading3.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        Text(
+          label,
+          style: AppTextStyles.caption.copyWith(
+            color: Colors.white.withOpacity(0.8),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileOption(IconData icon, String title, {bool isLogout = false}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            if (isLogout) {
+              _handleLogout();
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isLogout
+                        ? AppColors.error.withOpacity(0.1)
+                        : AppColors.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    color: isLogout ? AppColors.error : AppColors.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: AppTextStyles.subtitle2.copyWith(
+                      color: isLogout ? AppColors.error : AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: AppColors.textTertiary,
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Color _getPriorityColor(String priority) {
@@ -861,26 +1076,6 @@ class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with Tick
     }
   }
 
-  Widget _buildFloatingActionButton() {
-    return FloatingActionButton.extended(
-      onPressed: () {
-        _showRequestSearch();
-      },
-      backgroundColor: AppColors.primary,
-      elevation: 8,
-      icon: const Icon(
-        Icons.search_rounded,
-        color: Colors.white,
-      ),
-      label: Text(
-        'Find Requests',
-        style: AppTextStyles.button.copyWith(
-          fontSize: 14,
-        ),
-      ),
-    );
-  }
-
   void _acceptRequest(String requestId) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -889,7 +1084,6 @@ class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with Tick
         behavior: SnackBarBehavior.floating,
       ),
     );
-    // TODO: Implement accept logic
   }
 
   void _declineRequest(String requestId) {
@@ -900,7 +1094,6 @@ class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with Tick
         behavior: SnackBarBehavior.floating,
       ),
     );
-    // TODO: Implement decline logic
   }
 
   void _showAnalytics() {
@@ -1020,24 +1213,6 @@ class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with Tick
     );
   }
 
-  void _showProfile() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profile page coming soon!'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  void _showFullLeaderboard() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Full leaderboard coming soon!'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
   void _showRequestSearch() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -1067,7 +1242,6 @@ class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with Tick
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Handle bar
                     Center(
                       child: Container(
                         width: 40,
@@ -1079,8 +1253,6 @@ class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with Tick
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Header
                     Row(
                       children: [
                         Expanded(
@@ -1114,19 +1286,14 @@ class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with Tick
                         color: AppColors.textTertiary,
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Details
                     _buildDetailRow('Category', request['category']),
                     _buildDetailRow('Location', request['location']),
                     _buildDetailRow('Reported By', request['reportedBy']),
                     _buildDetailRow('Estimated Time', request['estimatedTime']),
                     _buildDetailRow('Budget', request['budget']),
                     _buildDetailRow('Time Ago', request['timeAgo']),
-
                     const SizedBox(height: 24),
-
                     Text(
                       'Description',
                       style: AppTextStyles.subtitle2.copyWith(
@@ -1142,10 +1309,7 @@ class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with Tick
                         height: 1.5,
                       ),
                     ),
-
                     const SizedBox(height: 32),
-
-                    // Action Buttons
                     Row(
                       children: [
                         Expanded(
@@ -1214,6 +1378,32 @@ class _SocialWorkerDashboardState extends State<SocialWorkerDashboard> with Tick
           ),
         ],
       ),
+    );
+  }
+
+  void _handleLogout() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Sign Out'),
+          content: const Text('Are you sure you want to sign out?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // TODO: Implement actual logout
+                Navigator.pushReplacementNamed(context, '/login');
+              },
+              child: const Text('Sign Out', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
     );
   }
 }
