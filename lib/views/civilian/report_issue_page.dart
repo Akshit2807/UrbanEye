@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ReportIssuePage extends StatefulWidget {
   const ReportIssuePage({Key? key}) : super(key: key);
@@ -24,6 +26,9 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
   String? _selectedService;
   bool _isAnalyzing = false;
   bool _isSubmitting = false;
+
+  // Updated API URL - make sure this matches your backend URL
+  static const String API_BASE_URL = 'https://ue-backend.onrender.com';
 
   final List<String> _categories = [
     'Pothole',
@@ -67,27 +72,193 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(source: source);
+    try {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
 
-    if (image != null) {
-      setState(() {
-        _selectedImage = File(image.path);
-        _isAnalyzing = true;
-      });
+      if (image != null) {
+        setState(() {
+          _selectedImage = File(image.path);
+          _isAnalyzing = true;
+          // Reset previous results
+          _aiDescription = null;
+          _issueCategory = null;
+        });
 
-      await _analyzeImage();
+        await _analyzeImage();
+      }
+    } catch (e) {
+      print("Error picking image: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error selecting image: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   Future<void> _analyzeImage() async {
-    await Future.delayed(const Duration(seconds: 6));
+    if (_selectedImage == null) return;
+
+    print("Image selected: ${_selectedImage!.path}");
 
     setState(() {
-      _aiDescription = "I can see a damaged road surface with a significant pothole. The hole appears to be approximately 2 feet in diameter and could pose a safety risk to vehicles and pedestrians.";
-      _issueCategory = "Pothole";
-      _isAnalyzing = false;
+      _isAnalyzing = true;
     });
+
+    try {
+      // First check if the backend is reachable
+      print("Checking backend health...");
+      final healthResponse = await http.get(
+        Uri.parse('$API_BASE_URL/health'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      ).timeout(Duration(seconds: 10));
+
+      print("Health check status: ${healthResponse.statusCode}");
+      print("Health check body: ${healthResponse.body}");
+
+      if (healthResponse.statusCode != 200) {
+        throw Exception('Backend server is not reachable');
+      }
+
+      print("Sending image to API...");
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$API_BASE_URL/report_civic_issue'),
+      );
+
+      // Add headers
+      request.headers.addAll({
+        'Accept': 'application/json',
+      });
+
+      // Add the image file
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'image',
+          _selectedImage!.path,
+          filename: 'issue_image.jpg',
+        ),
+      );
+
+      print("Request headers: ${request.headers}");
+      print("Request files: ${request.files.map((f) => f.filename)}");
+
+      // Send request with timeout
+      var streamedResponse = await request.send().timeout(Duration(seconds: 30));
+      var response = await http.Response.fromStream(streamedResponse);
+
+      print("API response status: ${response.statusCode}");
+      print("API response headers: ${response.headers}");
+      print("API response body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        print("Parsed JSON: $jsonResponse");
+
+        // Handle the updated response format from your backend
+        if (jsonResponse['success'] == true) {
+          if (jsonResponse['issues_detected'] == true &&
+              jsonResponse['issues'] != null &&
+              jsonResponse['issues'].isNotEmpty) {
+
+            // Extract first issue for display
+            final firstIssue = jsonResponse['issues'][0];
+
+            setState(() {
+              _aiDescription = firstIssue['description'] ?? 'Issue detected in the image';
+              _issueCategory = _mapIssueTypeToCategory(firstIssue['category'] ?? firstIssue['type'] ?? 'Other');
+            });
+          } else {
+            // No issues detected
+            setState(() {
+              _aiDescription = null;
+              _issueCategory = null;
+              _selectedImage = null;
+            });
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(jsonResponse['message'] ?? 'No civic issues detected in the image. Please try another photo.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        } else {
+          throw Exception(jsonResponse['message'] ?? 'Analysis failed');
+        }
+      } else if (response.statusCode == 502) {
+        throw Exception('Backend server error (502). Please try again later.');
+      } else if (response.statusCode == 400) {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'Invalid request');
+      } else {
+        throw Exception('Server error (${response.statusCode}). Please try again.');
+      }
+    } catch (e) {
+      print("Error analyzing image: $e");
+      setState(() {
+        _aiDescription = null;
+        _issueCategory = null;
+        _selectedImage = null;
+      });
+
+      String errorMessage = 'AI Analysis failed. Please try again.';
+      if (e.toString().contains('502')) {
+        errorMessage = 'Backend server is temporarily unavailable. Please try again later.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. Please check your internet connection and try again.';
+      } else if (e.toString().contains('not reachable')) {
+        errorMessage = 'Cannot connect to the server. Please check your internet connection.';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 5),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isAnalyzing = false;
+      });
+    }
+  }
+
+  // Helper method to map backend issue types to frontend categories
+  String _mapIssueTypeToCategory(String issueType) {
+    switch (issueType.toLowerCase()) {
+      case 'pothole':
+        return 'Pothole';
+      case 'garbage':
+      case 'waste':
+      case 'illegal_dumping':
+        return 'Garbage/Waste';
+      case 'streetlight':
+      case 'street_light':
+        return 'Street Light';
+      case 'sewage':
+      case 'drainage':
+      case 'waterlogging':
+        return 'Water Leakage';
+      case 'infrastructure':
+      case 'sidewalk':
+        return 'Road Damage';
+      case 'traffic_signal':
+        return 'Traffic Signal';
+      default:
+        return 'Other';
+    }
   }
 
   void _submitReport() async {
@@ -111,6 +282,23 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
       );
 
       Navigator.pop(context);
+    } else {
+      // Show validation errors
+      String errorMessage = '';
+      if (_selectedImage == null) {
+        errorMessage = 'Please select an image';
+      } else if (_selectedService == null) {
+        errorMessage = 'Please select a service type';
+      } else {
+        errorMessage = 'Please fill in all required fields';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: AppColors.warning,
+        ),
+      );
     }
   }
 
@@ -174,7 +362,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
       width: double.infinity,
       height: 200,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -257,7 +445,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -297,17 +485,19 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.info.withOpacity(0.1),
-            AppColors.primary.withOpacity(0.05),
-          ],
-        ),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: AppColors.info.withOpacity(0.3),
           width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,10 +581,10 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : Colors.white,
+                  color: isSelected ? AppColors.primary : AppColors.surface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                    color: isSelected ? AppColors.primary : AppColors.textTertiary.withOpacity(0.3),
                     width: 1.5,
                   ),
                   boxShadow: [
@@ -435,7 +625,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -448,7 +638,9 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
           child: TextFormField(
             controller: _descriptionController,
             maxLines: 4,
-            style: AppTextStyles.bodyLarge,
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: AppColors.textPrimary,
+            ),
             decoration: InputDecoration(
               hintText: 'Add any additional details...',
               hintStyle: AppTextStyles.bodyMedium.copyWith(
@@ -459,7 +651,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                 borderSide: BorderSide.none,
               ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: AppColors.surface,
               contentPadding: const EdgeInsets.all(16),
             ),
           ),
@@ -483,7 +675,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -495,7 +687,9 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
           ),
           child: TextFormField(
             controller: _locationController,
-            style: AppTextStyles.bodyLarge,
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: AppColors.textPrimary,
+            ),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter the location';
@@ -525,7 +719,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                 borderSide: BorderSide.none,
               ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: AppColors.surface,
               contentPadding: const EdgeInsets.all(16),
             ),
           ),
@@ -560,10 +754,10 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isSelected ? service['color'].withOpacity(0.1) : Colors.white,
+                  color: isSelected ? service['color'].withOpacity(0.1) : AppColors.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isSelected ? service['color'] : Colors.grey.shade200,
+                    color: isSelected ? service['color'] : AppColors.textTertiary.withOpacity(0.2),
                     width: isSelected ? 2 : 1,
                   ),
                   boxShadow: [
@@ -678,6 +872,10 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
       builder: (context) {
         return Container(
           padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -685,7 +883,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: AppColors.textTertiary.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -743,7 +941,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
           color: AppColors.surfaceVariant,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: Colors.grey.shade200,
+            color: AppColors.textTertiary.withOpacity(0.2),
             width: 1,
           ),
         ),

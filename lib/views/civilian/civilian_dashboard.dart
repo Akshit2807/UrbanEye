@@ -63,7 +63,9 @@ class _CivilianDashboardState extends State<CivilianDashboard> with TickerProvid
       body: Stack(
         children: [
           _buildAnimatedBackground(),
-          _pages[_selectedIndex],
+          _selectedIndex == 0
+              ? _buildDashboardHome()
+              : _pages[_selectedIndex],
         ],
       ),
       bottomNavigationBar: _buildEpicBottomNav(),
@@ -219,13 +221,8 @@ class _CivilianDashboardState extends State<CivilianDashboard> with TickerProvid
       },
     );
   }
-}
 
-class DashboardHome extends StatelessWidget {
-  const DashboardHome({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildDashboardHome() {
     return SafeArea(
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -367,7 +364,14 @@ class DashboardHome extends StatelessWidget {
                 subtitle: 'AI-powered detection',
                 icon: Icons.camera_alt_rounded,
                 gradient: AppColors.accentGradient,
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ReportIssuePage(),
+                    ),
+                  );
+                },
                 delay: 900,
               ),
             ),
@@ -378,7 +382,14 @@ class DashboardHome extends StatelessWidget {
                 subtitle: 'Real-time updates',
                 icon: Icons.timeline_rounded,
                 gradient: AppColors.primaryGradient,
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MyReportsPage(),
+                    ),
+                  );
+                },
                 delay: 1100,
               ),
             ),
@@ -393,7 +404,9 @@ class DashboardHome extends StatelessWidget {
                 subtitle: 'Connect & share',
                 icon: Icons.forum_rounded,
                 gradient: AppColors.secondaryGradient,
-                onTap: () {},
+                onTap: () {
+                  setState(() => _selectedIndex = 2);
+                },
                 delay: 1300,
               ),
             ),
@@ -406,7 +419,9 @@ class DashboardHome extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [AppColors.warning, AppColors.accentOrange],
                 ),
-                onTap: () {},
+                onTap: () {
+                  setState(() => _selectedIndex = 1);
+                },
                 delay: 1500,
               ),
             ),
@@ -628,7 +643,9 @@ class DashboardHome extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                setState(() => _selectedIndex = 3);
+              },
               child: Text(
                 'View All',
                 style: AppTextStyles.bodyMedium.copyWith(
@@ -750,5 +767,14 @@ class DashboardHome extends StatelessWidget {
     ).animate()
         .fadeIn(delay: Duration(milliseconds: delay), duration: 600.ms)
         .slideX(begin: 0.3, end: 0, delay: Duration(milliseconds: delay), duration: 600.ms);
+  }
+}
+
+class DashboardHome extends StatelessWidget {
+  const DashboardHome({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox.shrink(); // This class is now handled by _buildDashboardHome
   }
 }
