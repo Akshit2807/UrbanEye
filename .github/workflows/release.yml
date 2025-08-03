@@ -1,0 +1,59 @@
+# Name for this GitHub Actions workflow
+name: Build and Release UrbanEye APK
+
+# This workflow runs when a new tag is pushed that matches the 'v*.*.*' pattern
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-and-release:
+    # Use the latest version of Ubuntu as the runner
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up Java Development Kit (JDK) for building the Android app
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 3. Set up the Flutter SDK
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          # IMPORTANT: Change this to the Flutter version your project uses
+          flutter-version: '3.22.2' 
+          channel: 'stable'
+          cache: true # Cache Flutter dependencies for faster subsequent builds
+
+      # 4. Get Flutter project dependencies
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 5. (Optional but Recommended) Run tests to ensure code quality
+      - name: Run tests
+        run: flutter test
+
+      # 6. Build the release APK
+      - name: Build release APK
+        run: flutter build apk --release
+
+      # 7. Rename the APK to include the version tag
+      - name: Rename APK
+        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/UrbanEye-${{ github.ref_name }}.apk
+
+      # 8. Create a GitHub Release and upload the renamed APK
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # This enables automatic generation of release notes from pull requests
+          generate_release_notes: true
+          # The files to upload as assets to the release
+          files: build/app/outputs/flutter-apk/UrbanEye-${{ github.ref_name }}.apk
