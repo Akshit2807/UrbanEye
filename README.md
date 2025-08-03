@@ -35,10 +35,29 @@ Our mission is to leverage technology to make our cities more responsive, accoun
 
 ## 🎥 Demo Video & Live Link
 
+<table>
+<tr>
+<td width="50%" valign="top">
+
 Check out our project in action!
 
-* **Watch the Project Demo & Intro Video:** [**Link to Your Video**](https://youtu.be/1qoraqzspt4)
-* **Explore the Live Website/Platform:** [**urbaneye.com**](https://urban-eye-jfcf-3a9x5uwfu-akpahade55-9707s-projects.vercel.app/)
+- **Watch the Project Demo & Intro Video:** [**Link to Your Video**](https://youtu.be/1qoraqzspt4)  
+- **Explore the Live Website/Platform:** [**urbaneye.com**](https://urban-eye-jfcf-3a9x5uwfu-akpahade55-9707s-projects.vercel.app/)
+
+👉 *Click the image to open the website!*
+
+</td>
+<td width="50%">
+
+<a href="https://urban-eye-jfcf-3a9x5uwfu-akpahade55-9707s-projects.vercel.app/">
+  <img src="https://github.com/Akshit2807/UrbanEye/blob/main/demo/UE-website.png?raw=true" width="100%"/>
+</a>
+
+</td>
+</tr>
+</table>
+
+
 
 ---
 
