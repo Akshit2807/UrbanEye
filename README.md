@@ -60,10 +60,10 @@ Here's a sneak peek into the UrbanEye app interface.
 
 | Welcome Screen | Report an Issue | Issue Tracking |
 | :---: | :---: | :---: |
-| <a href="https://youtu.be/1qoraqzspt4" target="_blank"><img src="https://github.com/Akshit2807/UrbanEye/blob/main/demo/UE-demo-1.jpg" alt="Welcome Screen" width="250"></a> | <a href="https://youtu.be/1qoraqzspt4" target="_blank"><img src="https://github.com/Akshit2807/UrbanEye/blob/main/demo/UE-demo-2.jpg" alt="Report an Issue" width="250"></a> | <a href="https://youtu.be/1qoraqzspt4" target="_blank"><img src="https://github.com/Akshit2807/UrbanEye/blob/main/demo/UE-demo-3.jpg" alt="Issue Tracking" width="250"></a> |
+| <a href="https://youtu.be/1qoraqzspt4" target="_blank"><img src="https://github.com/Akshit2807/UrbanEye/blob/main/demo/UE-demo-1.jpg" alt="Welcome Screen" width="250"></a> | <a href="https://youtu.be/1qoraqzspt4" target="_blank"><img src="https://github.com/Akshit2807/UrbanEye/blob/main/demo/UE-demo-3.jpg" alt="Report an Issue" width="250"></a> | <a href="https://youtu.be/1qoraqzspt4" target="_blank"><img src="https://github.com/Akshit2807/UrbanEye/blob/main/demo/UE-demo-2.jpg" alt="Issue Tracking" width="250"></a> |
 | *A vibrant welcome screen to greet users.* | *Simple and quick issue reporting.* | *Track the status of your reports.* |
 
-*(To add screenshots, upload your images to the GitHub repo and replace `[Add Screenshot X Here]` with `![Alt Text](URL_to_your_image.png)`)*
+
 
 ---
 
