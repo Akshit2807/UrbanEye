@@ -42,7 +42,7 @@ Our mission is to leverage technology to make our cities more responsive, accoun
 Check out our project in action!
 
 - **Watch the Project Demo & Intro Video:** [**Link to Your Video**](https://youtu.be/1qoraqzspt4)  
-- **Explore the Live Website/Platform:** [**urbaneye.com**](https://urban-eye-jfcf-3a9x5uwfu-akpahade55-9707s-projects.vercel.app/)
+- **Explore the Live Website/Platform:** [**Link**](https://urban-eye-jfcf.vercel.app/)
 
 👉 *Click the image to open the website!*
 
